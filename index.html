@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <title>CEP</title>
+    <style>
+        body {
+            background: #f0f0f0;
+        }
+        h1 {
+            text-align: center;
+            font-size: 200%;
+        }
+        #d {
+            background: #f8f3f3;
+            margin: 20px auto;
+            border: #dadada solid 1px;
+            border-radius: 15px;
+            padding: 15px;
+        }
+        table {
+            margin-top: 20px;
+        }
+        th {
+            border : solid black 1px;
+            border-radius : 3px;
+            padding : 3px;
+            background : #dadada;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+        td {
+            border : solid black 1px;
+            border-radius : 3px;
+            padding : 3px;
+            background : #f0f0f0;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <div class="center">
+        <div id="d" class="col-sm-4">
+            <h1>Buscar Endereço</h1>
+            
+            <div class="form-group">
+                <label>Digite seu CEP:</label>
+                <input type="Text" id="cep" name="cep" class="form-control" size="15" maxlength="8" placeholder="Só números">
+            </div>
+            <div class="form-group">
+                <button class="btn btn-primary" type="button" onclick="consultaCep()">Consultar</button>
+            </div>
+            
+            <div style="padding: 20px;" id="return"></div>
+            
+            <h1>Buscar CEP</h1>
+            
+            <div class="form-group">
+                <label>Estado:</label>
+                <input type="Text" id="estado" name="estado" class="form-control" placeholder="Sigla (duas letras)">
+            </div>
+            <div class="form-group">
+                <label>Cidade:</label>
+                <input type="Text" id="cidade" name="cidade" class="form-control" placeholder="No mínimo 3 letras">
+            </div>
+            <div class="form-group">
+                <label>Rua:</label>
+                <input type="Text" id="rua" name="rua" class="form-control" placeholder="No mínimo 3 letras">
+            </div>
+            <div class="form-group">
+                <button class="btn btn-primary" type="button" onclick="consultaEndereco()">Consultar</button>
+            </div>
+            
+            <div id="ceps"></div>
+        </div>
+    </div>
+
+    <script>
+        window.onload = () => {
+            getInput('cep').onkeyup = () => {
+                setValue(getValue('cep').replace(/[^0-9]+/gi, ""), 'cep')
+            }
+        }
+
+        function getInput(id) { return document.getElementById(id)}
+
+        function getValue(id) { return document.getElementById(id).value }
+
+        function setValue(response, id) { document.getElementById(id).value = response }
+
+        async function consultaCep() {
+            try {
+                var cep = document.getElementById("cep").value
+                var url = `https://viacep.com.br/ws/${cep}/json/`
+                const response = await fetch(url)
+                const endereco = await response.json()
+    
+                document.getElementById('return').innerHTML = 'CEP: ' + endereco.cep + '<br>' + 
+                'Logradouro: ' + endereco.logradouro + '<br>' +
+                'Bairro: ' + endereco.bairro + '<br>' +
+                'Cidade: ' + endereco.localidade + '<br>' +
+                'Estado: ' + endereco.uf + '<br>';
+            } catch {
+                document.getElementById('return').innerHTML = 'Endereço não encontrado.' 
+            }
+        }
+
+        async function consultaEndereco() {
+            try{
+                var estado = document.getElementById("estado").value
+                var cidade = document.getElementById("cidade").value
+                var rua = document.getElementById("rua").value
+                
+                var ceps = document.getElementById("ceps");
+                ceps.innerText = "";
+    
+                const url = `https://viacep.com.br/ws/${estado}/${cidade}/${rua}/json/`
+                const response = await fetch(url)
+                const cep = await response.json()
+                            
+                if(cep.length > 0) {
+                    var tabela = document.createElement('table')
+                        var thead = document.createElement('thead')
+                            var tr = document.createElement('tr');
+                                var th = document.createElement('th');
+                                th.innerHTML = 'CEP';
+                                tr.appendChild(th);
+                                var th = document.createElement('th');
+                                th.innerHTML = 'Logradouro';
+                                tr.appendChild(th);
+                                var th = document.createElement('th');
+                                th.innerHTML = 'Bairro';
+                                tr.appendChild(th);
+                                var th = document.createElement('th');
+                                th.innerHTML = 'Cidade';
+                                tr.appendChild(th);
+                                var th = document.createElement('th');
+                                th.innerHTML = 'Estado';
+                                tr.appendChild(th);
+                        thead.appendChild(tr);
+                    tabela.appendChild(thead);
+                    ceps.appendChild(tabela)
+                } else {
+                    var p = document.createElement('p')
+                    p.innerHTML = 'Nenhum CEP encontrado'
+                    ceps.appendChild(p)
+                }
+
+                for(i = 0; i < cep.length; i++) {
+                    var tbody = document.createElement('tbody');
+                        var tr = document.createElement('tr')
+                            var td = document.createElement('td');
+                            td.innerHTML = cep[i].cep
+                            tr.appendChild(td);
+                            var td = document.createElement('td');
+                            td.innerHTML = cep[i].logradouro
+                            tr.appendChild(td);
+                            var td = document.createElement('td');
+                            td.innerHTML = cep[i].bairro
+                            tr.appendChild(td);
+                            var td = document.createElement('td');
+                            td.innerHTML = cep[i].localidade
+                            tr.appendChild(td);
+                            var td = document.createElement('td');
+                            td.innerHTML = cep[i].uf
+                            tr.appendChild(td);
+                        tbody.appendChild(tr);
+                    tabela.appendChild(tbody);
+                }
+            } catch {
+                var p = document.createElement('p')
+                p.innerHTML = 'CEP não encontrado'
+                ceps.appendChild(p)
+            }
+        }
+</script>
+</body>
+</html>
